@@ -1,46 +1,78 @@
 const express    = require('express');
-const mysql      = require('mysql');
-const request    = require('sync-request');
-const moment     = require('moment');
-const bodyParser   = require('body-parser');
 ///// 트위치 비디오 다운로더
-const fs      = require('fs');
+// const fs      = require('fs');
 
-var config = require('./dbconfig');//디비
+
+require("dotenv").config();
+const passport = require("passport");
+// const twitchStrategy = require("../js/passport-twitch").Strategy;
+const YoutubeV3Strategy = require('passport-youtube-v3').Strategy
+
+
+// var config = require('./dbconfig');//디비
 
 const app = express();
 
 // configuration =========================
-app.set('port', 80);
-app.use(express.json());
+app.set('port', 80);;
 
-var clientIdTwitch = "";//클라이언트 id
-var redirect_uri = encodeURI("http://localhost")
+var clientIdTwitch = "ojp6hz9s8e6cad3rt33q5u4ym0rtj2";//클라이언트 id
+// var redirect_uri = encodeURI("http://localhost")
 
-const callDB=function(qury,func){
-  var connection = mysql.createConnection(config.databaseOptions);//연결
-  connection.query(qury,func);
-  connection.end();
-}
+console.log(
+  process.env.YOUTUBE_CLIENT_ID, process.env.YOUTUBE_CLIENT_SC);
+passport.use(new YoutubeV3Strategy({
+    clientID: process.env.YOUTUBE_CLIENT_ID,
+    clientSecret: process.env.YOUTUBE_CLIENT_SC,
+    callbackURL: "http://localhost:3000/youtube/callback",
+    scope: ['https://www.googleapis.com/auth/youtube.readonly']
+  },
+  function(accessToken, refreshToken, profile, done) {
+    console.log(accessToken, refreshToken, profile);
+  }
+));
+app.get("/youtube", passport.authenticate("youtube"));
+app.get(
+  "/youtube/callback",
+  passport.authenticate("youtube", { failureRedirect: "/" }),
+  function (req, res) {
+    res.status.send("?");
+  }
+);
+
+// const callDB=function(qury,func){
+//   var connection = mysql.createConnection(config.databaseOptions);//연결
+//   connection.query(qury,func);
+//   connection.end();
+// }
 ////////////////////////////////////////////////////////////////////////////////
 // app.use(express.static('public'));
-app.use(bodyParser.urlencoded({extended: false}));
-app.get('/', (req, res) => {
-  fs.readFile('index.html',function(error, data){
-    if(!error){
-      res.writeHead(200,{'Content-Type':'text/html'});
-      res.end(data);
-    }else console.log(error);
-  });
-});
-app.get('/info', (req, res) => {
-  fs.readFile('info.html',function(error, data){
-    if(!error){
-      res.writeHead(200,{'Content-Type':'text/html'});
-      res.end(data);
-    }else console.log(error);
-  });
-});
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+
+/*
+ya29.a0AfH6SMAvPom-JQ3BYx0LybbykPHWHp8-9E3sGMzqnKVHfOUBChvkdHCdWT_v1jgxx4v6MyzIu2La8jq5hJ6Cot_NxBfLkjxUW9D61Hj-pfqGoJIOaEJpPArHi1I167FlFCmBUux9wizVsqlzw5IxIUiLq0C_
+1//0eVwZ55aQQND6CgYIARAAGA4SNwF-L9Ir8AATYdLpxoEWW7T6Z-BW_l7vqTCJgs9RlXWUYWoB0nZUgrXnVYSZRf6le_4IKrQZRp0
+{
+  provider: 'youtube',
+  _raw: '{\n' +
+    '  "kind": "youtube#channelListResponse",\n' +
+    '  "etag": "RuuXzTIr0OoDqI4S0RU6n4FqKEM",\n' +
+    '  "pageInfo": {\n' +
+    '    "totalResults": 0,\n' +
+    '    "resultsPerPage": 5\n' +
+    '  }\n' +
+    '}\n',
+  _json: {
+    kind: 'youtube#channelListResponse',
+    etag: 'RuuXzTIr0OoDqI4S0RU6n4FqKEM',
+    pageInfo: { totalResults: 0, resultsPerPage: 5 }
+  }
+}
+*/
+
+
 app.post('/user', (req, res) => {
   const token={'youtube':req.headers.youtube,'twitch':req.headers.twitch,'user':req.headers.user};
   // res.writeHead(200,{'Content-Type':'text/html'});res.end("??");return;
@@ -64,11 +96,12 @@ app.post('/user', (req, res) => {
       if(Ytoken.access_token){// 토큰이 정상
         var update_time = moment(Date.now()).add(5,'M').add(3,'w').format('YYYY-MM-DD HH:mm:ss');// 갱신시간 (리프레쉬  토큰)
         request('GET', 'https://oauth2.googleapis.com/revoke?token='+Ytoken.access_token, {headers: {'content-type': 'application/x-www-form-urlencoded'}});
-        callDB("INSERT INTO `twitchAuto`(`tid`, `tname`, `update_time`,`refresh_token`, `oauth_twitch`) VALUES ('"+user.id+"','"+user.login+"','"+update_time+"','"+Ytoken.refresh_token+"','"+token.twitch+"')",(error, rows) => {
-          if (error) throw error;
-          res.writeHead(200,{'Content-Type':'text/html'});
-          res.end("ok");
-        });
+
+        // callDB("INSERT INTO `twitchAuto`(`tid`, `tname`, `update_time`,`refresh_token`, `oauth_twitch`) VALUES ('"+user.id+"','"+user.login+"','"+update_time+"','"+Ytoken.refresh_token+"','"+token.twitch+"')",(error, rows) => {
+        //   if (error) throw error;
+        //   res.writeHead(200,{'Content-Type':'text/html'});
+        //   res.end("ok");
+        // });
       }else{
         res.writeHead(400,{'Content-Type':'text/html'});
         res.end('Error');
@@ -91,11 +124,11 @@ app.post('/user', (req, res) => {
       if(Ytoken.access_token){// 토큰이 정상
         var update_time = moment(Date.now()).add(5,'M').add(3,'w').format('YYYY-MM-DD HH:mm:ss');// 갱신시간 (리프레쉬  토큰)
         request('GET', 'https://oauth2.googleapis.com/revoke?token='+Ytoken.access_token, {headers: {'content-type': 'application/x-www-form-urlencoded'}});
-        callDB("UPDATE `twitchAuto` SET refresh_token='"+Ytoken.refresh_token+"', update_time='"+update_time+"' WHERE id="+user.id,(error, rows) => {
-          if (error) throw error;
-          res.writeHead(200,{'Content-Type':'text/html'});
-          res.end("ok");
-        });
+        // callDB("UPDATE `twitchAuto` SET refresh_token='"+Ytoken.refresh_token+"', update_time='"+update_time+"' WHERE id="+user.id,(error, rows) => {
+        //   if (error) throw error;
+        //   res.writeHead(200,{'Content-Type':'text/html'});
+        //   res.end("ok");
+        // });
       }else{
         res.writeHead(400,{'Content-Type':'text/html'});
         res.end('Error');
@@ -111,6 +144,14 @@ app.post('/user', (req, res) => {
   }
 });
 
-app.listen(process.env.PORT, () => {
+app.listen(3000, () => {
   console.log('Express server listening on port ' + app.get('port'));
 });
+
+
+
+/*
+모니터링
+npx sequelize model:create --name twitch_live_recoding --attributes "login:text"
+
+*/

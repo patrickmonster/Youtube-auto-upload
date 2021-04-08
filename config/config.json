@@ -1,0 +1,26 @@
+{
+  "development": {
+    "username": "neocat",
+    "password": "soungjin1120!",
+    "database": "dbneocat",
+    "host": "db.neocat.gabia.io",
+    "dialect": "mysql",
+    "logging": true
+  },
+  "test": {
+    "username": "neocat",
+    "password": "soungjin1120!",
+    "database": "dbneocat",
+    "host": "db.neocat.gabia.io",
+    "dialect": "mysql",
+    "logging": true
+  },
+  "production": {
+    "username": "neocat",
+    "password": "soungjin1120!",
+    "database": "dbneocat",
+    "host": "211.47.75.102",
+    "dialect": "mysql",
+    "logging": false
+  }
+}

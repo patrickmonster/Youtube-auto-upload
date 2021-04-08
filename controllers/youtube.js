@@ -1,7 +1,8 @@
 const google = require('googleapis').google;
 const fs      = require('fs');
 const OAuth2 = google.auth.OAuth2;
-const request    = require('sync-request');
+const axios = require('axios');
+// const request    = require('sync-request');
 
 //토큰 취소
 //https://accounts.google.com/o/oauth2/revoke?token=
@@ -44,24 +45,33 @@ const videoUpload = async (videoDetails,token) => {
   console.log(`Video available [${title}/${path}] at: https:/youtu.be/${youtubeResponse.data.id}`);
   return youtubeResponse.data;
 };
-const isAuth = function(token){
-  return request('GET', 'https://www.googleapis.com/oauth2/v1/tokeninfo?access_token='+token).statusCode==200;
+const isAuth = async function(token){
+  try{
+    await axios.get(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${token}`);
+    return true;
+  } catch(e){
+    return false;
+  }
+}
+/**
+ * ya29.a0AfH6SMAvPom-JQ3BYx0LybbykPHWHp8-9E3sGMzqnKVHfOUBChvkdHCdWT_v1jgxx4v6MyzIu2La8jq5hJ6Cot_NxBfLkjxUW9D61Hj-pfqGoJIOaEJpPArHi1I167FlFCmBUux9wizVsqlzw5IxIUiLq0C_
+ * @param {*} client 
+ * @param {*} secret 
+ * @param {*} refresh_token 1//0eVwZ55aQQND6CgYIARAAGA4SNwF-L9Ir8AATYdLpxoEWW7T6Z-BW_l7vqTCJgs9RlXWUYWoB0nZUgrXnVYSZRf6le_4IKrQZRp0
+ * @returns 
+ */
+const updateToken=async function(){
+    const data = await axios.post('https://accounts.google.com/o/oauth2/token?' + [
+      'client_id=150751817804-v4clbk35at0eg1252e4vi47covj930pf.apps.googleusercontent.com',
+      'client_secret=Tv303D3Lya0K29APFo24q9w6',
+      'refresh_token=1//0eVwZ55aQQND6CgYIARAAGA4SNwF-L9Ir8AATYdLpxoEWW7T6Z-BW_l7vqTCJgs9RlXWUYWoB0nZUgrXnVYSZRf6le_4IKrQZRp0',
+      'grant_type=refresh_token'
+    ].join('&'), {}, {'content-type': 'application/x-www-form-urlencoded'});
+    return data.data;
 }
 
-const updateToken=function(client,secret,refresh_token){
-    var data =  request('POST', 'https://accounts.google.com/o/oauth2/token', {headers: {'content-type': 'application/x-www-form-urlencoded'},body:[
-      'client_id='+client,
-      'client_secret='+secret,
-      'refresh_token='+refresh_token,
-      'grant_type=refresh_token'
-    ].join('&')});
-    if(data.statusCode!=200){
-      //토큰 교환 실패
-      return false;
-    }
-    return JSON.parse(data.getBody('utf8'));// 토큰 데이터(갱신용 데이터)
-}
+const youtube = { videoUpload ,updateToken, isAuth};
 
 
 ///https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=
-module.exports = { videoUpload ,updateToken, isAuth};
+module.exports = youtube;
