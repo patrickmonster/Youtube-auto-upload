@@ -1,4 +1,4 @@
-const express    = require('express');
+const express = require('express');
 ///// 트위치 비디오 다운로더
 // const fs      = require('fs');
 
@@ -22,12 +22,12 @@ var clientIdTwitch = "ojp6hz9s8e6cad3rt33q5u4ym0rtj2";//클라이언트 id
 console.log(
   process.env.YOUTUBE_CLIENT_ID, process.env.YOUTUBE_CLIENT_SC);
 passport.use(new YoutubeV3Strategy({
-    clientID: process.env.YOUTUBE_CLIENT_ID,
-    clientSecret: process.env.YOUTUBE_CLIENT_SC,
-    callbackURL: "http://localhost:3000/youtube/callback",
-    scope: ['https://www.googleapis.com/auth/youtube.readonly']
-  },
-  function(accessToken, refreshToken, profile, done) {
+  clientID: process.env.YOUTUBE_CLIENT_ID,
+  clientSecret: process.env.YOUTUBE_CLIENT_SC,
+  callbackURL: "http://localhost:3000/youtube/callback",
+  scope: ['https://www.googleapis.com/auth/youtube.readonly']
+},
+  function (accessToken, refreshToken, profile, done) {
     console.log(accessToken, refreshToken, profile);
   }
 ));
@@ -74,7 +74,7 @@ ya29.a0AfH6SMAvPom-JQ3BYx0LybbykPHWHp8-9E3sGMzqnKVHfOUBChvkdHCdWT_v1jgxx4v6MyzIu
 
 
 app.post('/user', (req, res) => {
-  const token={'youtube':req.headers.youtube,'twitch':req.headers.twitch,'user':req.headers.user};
+  const token = { 'youtube': req.headers.youtube, 'twitch': req.headers.twitch, 'user': req.headers.user };
   // res.writeHead(200,{'Content-Type':'text/html'});res.end("??");return;
   var data = request('GET', 'https://api.twitch.tv/helix/users', {
     headers: {
@@ -83,63 +83,67 @@ app.post('/user', (req, res) => {
     }
   });
   var user = JSON.parse(data.getBody('utf8')).data[0];
-  if(token.user.indexOf('gast')!=-1 || user && user.login===token.user){
+  if (token.user.indexOf('gast') != -1 || user && user.login === token.user) {
     try {
-      data =  request('POST', 'https://oauth2.googleapis.com/token', {headers: {'content-type': 'application/x-www-form-urlencoded'},body:[
-        'code='+token.youtube,
-        'client_id='+config.youtubeOption.client,
-        'client_secret='+config.youtubeOption.password,
-        'redirect_uri='+redirect_uri,
-        'grant_type=authorization_code'
-      ].join('&')});
+      data = request('POST', 'https://oauth2.googleapis.com/token', {
+        headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: [
+          'code=' + token.youtube,
+          'client_id=' + config.youtubeOption.client,
+          'client_secret=' + config.youtubeOption.password,
+          'redirect_uri=' + redirect_uri,
+          'grant_type=authorization_code'
+        ].join('&')
+      });
       var Ytoken = JSON.parse(data.getBody('utf8'));
-      if(Ytoken.access_token){// 토큰이 정상
-        var update_time = moment(Date.now()).add(5,'M').add(3,'w').format('YYYY-MM-DD HH:mm:ss');// 갱신시간 (리프레쉬  토큰)
-        request('GET', 'https://oauth2.googleapis.com/revoke?token='+Ytoken.access_token, {headers: {'content-type': 'application/x-www-form-urlencoded'}});
+      if (Ytoken.access_token) {// 토큰이 정상
+        var update_time = moment(Date.now()).add(5, 'M').add(3, 'w').format('YYYY-MM-DD HH:mm:ss');// 갱신시간 (리프레쉬  토큰)
+        request('GET', 'https://oauth2.googleapis.com/revoke?token=' + Ytoken.access_token, { headers: { 'content-type': 'application/x-www-form-urlencoded' } });
 
         // callDB("INSERT INTO `twitchAuto`(`tid`, `tname`, `update_time`,`refresh_token`, `oauth_twitch`) VALUES ('"+user.id+"','"+user.login+"','"+update_time+"','"+Ytoken.refresh_token+"','"+token.twitch+"')",(error, rows) => {
         //   if (error) throw error;
         //   res.writeHead(200,{'Content-Type':'text/html'});
         //   res.end("ok");
         // });
-      }else{
-        res.writeHead(400,{'Content-Type':'text/html'});
+      } else {
+        res.writeHead(400, { 'Content-Type': 'text/html' });
         res.end('Error');
       }
     } catch (e) {
       console.log(e);
-      res.writeHead(400,{'Content-Type':'text/html'});
+      res.writeHead(400, { 'Content-Type': 'text/html' });
       res.end('Error');
     }
-  }else if(token.user.indexOf('update')!=-1) {
+  } else if (token.user.indexOf('update') != -1) {
     try {
-      data =  request('POST', 'https://oauth2.googleapis.com/token', {headers: {'content-type': 'application/x-www-form-urlencoded'},body:[
-        'code='+token.youtube,
-        'client_id='+config.youtubeOption.client,
-        'client_secret='+config.youtubeOption.password,
-        'redirect_uri='+redirect_uri,
-        'grant_type=authorization_code'
-      ].join('&')});
+      data = request('POST', 'https://oauth2.googleapis.com/token', {
+        headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: [
+          'code=' + token.youtube,
+          'client_id=' + config.youtubeOption.client,
+          'client_secret=' + config.youtubeOption.password,
+          'redirect_uri=' + redirect_uri,
+          'grant_type=authorization_code'
+        ].join('&')
+      });
       var Ytoken = JSON.parse(data.getBody('utf8'));
-      if(Ytoken.access_token){// 토큰이 정상
-        var update_time = moment(Date.now()).add(5,'M').add(3,'w').format('YYYY-MM-DD HH:mm:ss');// 갱신시간 (리프레쉬  토큰)
-        request('GET', 'https://oauth2.googleapis.com/revoke?token='+Ytoken.access_token, {headers: {'content-type': 'application/x-www-form-urlencoded'}});
+      if (Ytoken.access_token) {// 토큰이 정상
+        var update_time = moment(Date.now()).add(5, 'M').add(3, 'w').format('YYYY-MM-DD HH:mm:ss');// 갱신시간 (리프레쉬  토큰)
+        request('GET', 'https://oauth2.googleapis.com/revoke?token=' + Ytoken.access_token, { headers: { 'content-type': 'application/x-www-form-urlencoded' } });
         // callDB("UPDATE `twitchAuto` SET refresh_token='"+Ytoken.refresh_token+"', update_time='"+update_time+"' WHERE id="+user.id,(error, rows) => {
         //   if (error) throw error;
         //   res.writeHead(200,{'Content-Type':'text/html'});
         //   res.end("ok");
         // });
-      }else{
-        res.writeHead(400,{'Content-Type':'text/html'});
+      } else {
+        res.writeHead(400, { 'Content-Type': 'text/html' });
         res.end('Error');
       }
     } catch (e) {
       console.log(e);
-      res.writeHead(400,{'Content-Type':'text/html'});
+      res.writeHead(400, { 'Content-Type': 'text/html' });
       res.end('Error');
     }
-  }else {
-    res.writeHead(400,{'Content-Type':'text/html'});
+  } else {
+    res.writeHead(400, { 'Content-Type': 'text/html' });
     res.end('Error - unmach token');
   }
 });
