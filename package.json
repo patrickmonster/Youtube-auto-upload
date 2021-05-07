@@ -14,6 +14,7 @@
     "passport": "^0.4.1",
     "passport-youtube-v3": "^2.1.0",
     "sequelize": "^6.6.2",
+    "sequelize-auto": "^0.8.2",
     "sync-request": "^6.1.0"
   },
   "devDependencies": {
@@ -21,6 +22,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node main.js",
     "postinstall": "link-module-alias"
   },
   "repository": {
