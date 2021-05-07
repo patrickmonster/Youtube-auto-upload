@@ -1,12 +1,12 @@
 const axios = require('axios');
 ///// 트위치 비디오 다운로더
 // const ffmpeg = require('fluent-ffmpeg');
-const fs      = require('fs');
+const fs = require('fs');
 const child_process = require('child_process');
 
 require("dotenv").config();
 const { twitch_live_recoding } = require('#models');
-const { Token, youtube : { videoUpload ,updateToken, isAuth} } = require('#controllers');
+const { Token, youtube: { videoUpload, updateToken, isAuth } } = require('#controllers');
 
 // var clientIdTwitch = "ojp6hz9s8e6cad3rt33q5u4ym0rtj2";
 // var redirect_uri = encodeURI("http://localhost")
@@ -25,12 +25,12 @@ const live_data = {};
 let youtube_token = "";
 
 //정기적으로 youtube 토큰을 업데이트함
-const DB_Update=function(){
-  twitch_live_recoding.findAll().then(async data=>{
+const DB_Update = function () {
+  twitch_live_recoding.findAll().then(async data => {
     data = data.map(i => i.dataValues);
 
-    const {token,client_id: clientID} = await Token();
-    const ids = data.map(o=>o.login);
+    const { token, client_id: clientID } = await Token();
+    const ids = data.map(o => o.login);
     /**
      * {
   "data": [
@@ -57,48 +57,45 @@ const DB_Update=function(){
   }
 }
      */
-    const livusers = await loadTwitchLiveStreamStateUser(token,ids,"user_login",clientID);
-    
-    const live_data_now = livusers.map(o=>{
-      return {"display-name":o.user_name, "title": o.title, "startAt": o["started_at"]}
+    const livusers = await loadTwitchLiveStreamStateUser(token, ids, "user_login", clientID);
+
+    const live_data_now = livusers.map(o => {
+      return { "display-name": o.user_name, "title": o.title, "startAt": o["started_at"] }
     });
 
-    const online = live_data_now.filter(o=>online_users.includes(o["display-name"]));
-    const offline = live_data_now.filter(o=>!online_users.includes(o["display-name"]));
-    
+    const online = live_data_now.filter(o => online_users.includes(o["display-name"]));
+    const offline = live_data_now.filter(o => !online_users.includes(o["display-name"]));
+
     //새로운 온라인 유저
-    online.filter(o=>!online_users.includes(o["display-name"])).forEach(o=>{
+    online.filter(o => !online_users.includes(o["display-name"])).forEach(o => {
       live_data[o["display-name"]] = o;
       online_users.push(o["display-name"]);
       console.log(`${o["user_name"]}님이 라이브 생방을 시작함! - ${o["title"]}`);
     });
 
-    offline.filter(o=>!online_users.includes(o["display-name"])).forEach(o=>{
+    offline.filter(o => !online_users.includes(o["display-name"])).forEach(o => {
       delete live_data[o["display-name"]];
       const index = online_users.indexOf(o["display-name"]);
-      if(index != -1){
-        online_users.splice(index,1);
+      if (index != -1) {
+        online_users.splice(index, 1);
       }
 
       // './lib/youtube-dl.exe', ['-f','720','--output','clip/%(title)s$'+key+'.%(ext)s','https://clips.twitch.tv/embed?clip='+key]
-      child_process.spawn('youtube-dl', ['',item.tid]).stdout.on('data', function(data) {
-          console.log(item.tid,":",data.toString());
-      }).on("exit",function(code){
-        console.log(item.tid,"처리 완료!" , code);
+      child_process.spawn('youtube-dl', ['', item.tid]).stdout.on('data', function (data) {
+        console.log(item.tid, ":", data.toString());
+      }).on("exit", function (code) {
+        console.log(item.tid, "처리 완료!", code);
       });//보조 프로세서 다운로드 시작
     });
     console.log(`활성사용자 : ${online_users.length}명 [${online_users.join(",")}]`);
-
     // isAuth(youtube_token).then(async i=>{
     //   if(!i){
     //     youtube_token = (await updateToken()).access_token;
     //     console.log(`토큰 업데이트 : ${youtube_token}`);
     //   }
-    //   console.log(youtube_token); // 발급토큰
-
-
+    //   console.log(youtube_token); // 발급토큰r
     // });
-  }).catch(e=>{
+  }).catch(e => {
     //
     // console.error(e);
   });
@@ -143,19 +140,19 @@ async function loadTwitchLiveStreamStateUser(token, l, target = "user_id", clien
   if (typeof l == "string") tag = `after=${l}`;
   else tag = `${target}=${l.join("&" + target + "=")}`;
   let data = await axios({
-      mathod: "GET",
-      url: `https://api.twitch.tv/helix/streams?first=100&${tag}`,
-      headers: {
-          "client-id": client_id,
-          authorization: `Bearer ${token}`,
-      },
+    mathod: "GET",
+    url: `https://api.twitch.tv/helix/streams?first=100&${tag}`,
+    headers: {
+      "client-id": client_id,
+      authorization: `Bearer ${token}`,
+    },
   });
   if (data.status != 200) return [];
   data = data.data;
   if (data.pagination.hasOwnProperty("cursor"))
-      data.data.push(
-          ...loadTwitchLiveStreamStateUser(token, data.pagination.cursor)
-      );
+    data.data.push(
+      ...loadTwitchLiveStreamStateUser(token, data.pagination.cursor)
+    );
   return data.data;
 }
 DB_Update();
